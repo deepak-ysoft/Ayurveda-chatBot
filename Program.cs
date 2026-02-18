@@ -1,4 +1,4 @@
-using Ayurveda_chatBot.Data;
+﻿using Ayurveda_chatBot.Data;
 using Ayurveda_chatBot.Helpers;
 using Ayurveda_chatBot.Services.Implementations;
 using Ayurveda_chatBot.Services.Interface;
@@ -95,12 +95,9 @@ builder.Services.AddScoped<JwtTokenGenerator>();
 
 var app = builder.Build();
 
-// Configure the HTTP request pipeline.
-if (app.Environment.IsDevelopment())
-{
-    app.UseSwagger();
-    app.UseSwaggerUI();
-}
+app.UseSwagger();
+app.UseSwaggerUI();
+
 
 app.UseHttpsRedirection();
 app.UseCors();
@@ -108,6 +105,8 @@ app.UseAuthentication();
 app.UseAuthorization();
 
 app.MapControllers();
+
+app.MapGet("/", () => "Ayurveda ChatBot API is running 🚀");
 
 var port = Environment.GetEnvironmentVariable("PORT") ?? "5000";
 app.Urls.Add($"http://*:{port}");
