@@ -5,4 +5,9 @@
         public string Answer { get; set; }
         public string Disclaimer { get; set; }
     }
+
+    public class ChatRequestDto
+    {
+        public string Message { get; set; }
+    }
 }

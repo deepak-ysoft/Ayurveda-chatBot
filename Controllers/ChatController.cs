@@ -1,4 +1,5 @@
-﻿using Ayurveda_chatBot.Services.Interface;
+﻿using Ayurveda_chatBot.DTO;
+using Ayurveda_chatBot.Services.Interface;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
@@ -18,12 +19,12 @@ namespace Ayurveda_chatBot.Controllers
         }
         [Authorize]
         [HttpPost]
-        public async Task<IActionResult> SendMessage([FromBody] string message)
+        public async Task<IActionResult> SendMessage(ChatRequestDto model)
         {
             var userId = Guid.Parse(
                 User.FindFirst(ClaimTypes.NameIdentifier)?.Value);
 
-            var result = await _chatService.ProcessMessage(userId, message);
+            var result = await _chatService.ProcessMessage(userId, model.Message);
 
             return Ok(result);
         }

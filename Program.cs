@@ -43,9 +43,9 @@ builder.Services.AddCors(options =>
 {
     options.AddDefaultPolicy(policy =>
     {
-        policy.AllowAnyOrigin()   // Allow all origins
-              .AllowAnyHeader()   // Allow any headers
-              .AllowAnyMethod();  // Allow any methods (GET, POST, etc.)
+        policy.AllowAnyOrigin()
+              .AllowAnyHeader()
+              .AllowAnyMethod();
     });
 });
 
@@ -103,12 +103,13 @@ if (app.Environment.IsDevelopment())
 }
 
 app.UseHttpsRedirection();
-
+app.UseCors();
 app.UseAuthentication();
-app.UseAuthorization();sfsd
+app.UseAuthorization();
 
 app.MapControllers();
+
 var port = Environment.GetEnvironmentVariable("PORT") ?? "5000";
-app.Run($"http://0.0.0.0:{port}");
+app.Urls.Add($"http://*:{port}");
 
 app.Run();
