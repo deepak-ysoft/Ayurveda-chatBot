@@ -1,0 +1,6 @@
+@Ayurveda_chatBot_HostAddress = http://localhost:5051
+
+GET {{Ayurveda_chatBot_HostAddress}}/Auth/
+Accept: application/json
+
+###
