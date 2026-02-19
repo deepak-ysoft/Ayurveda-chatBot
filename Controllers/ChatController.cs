@@ -62,5 +62,19 @@ namespace Ayurveda_chatBot.Controllers
 
             return Ok(history);
         }
+
+        [HttpDelete("delete-chat/{chatId}")]
+        public async Task<IActionResult> DeleteChat(Guid chatId)
+        {
+            var res = await _chatService.DeleteChatAsync(chatId);
+            return Ok(res);
+        }
+
+        [HttpDelete("delete-session/{sessionId}")]
+        public async Task<IActionResult> GetSession(Guid sessionId)
+        {
+            var res = await _chatService.DeleteSessionAsync(sessionId);
+            return Ok(res);
+        }
     }
 }

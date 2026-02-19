@@ -9,5 +9,7 @@ namespace Ayurveda_chatBot.Services.Interface
         Task<ChatResponseDto> ProcessMessage(Guid userId, SendMessageDto dto);
         Task<List<ChatSession>> GetUserSessionsAsync(Guid userId);
         Task<List<ChatHistoryDto>> GetUserHistoryAsync(Guid sessionId);
+        Task<string> DeleteChatAsync(Guid chatId);
+        Task<string> DeleteSessionAsync(Guid sessionId);
     }
 }

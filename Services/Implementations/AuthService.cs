@@ -106,7 +106,7 @@ namespace Ayurveda_chatBot.Services.Implementations
                 DoshaId = dosha.Id
             };
 
-            _context.UserSavedDoshas.Add(userDosha);
+            await _context.UserSavedDoshas.AddAsync(userDosha);
 
             await _context.SaveChangesAsync();
 

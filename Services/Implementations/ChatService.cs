@@ -128,7 +128,7 @@ namespace Ayurveda_chatBot.Services.Implementations
         public async Task<List<ChatSession>> GetUserSessionsAsync(Guid userId)
         {
             return await _context.ChatSessions
-                .Where(x => x.UserId == userId)
+                .Where(x => x.UserId == userId && !x.IsDeleted )
                 .OrderByDescending(x => x.CreatedAt)
                 .ToListAsync();
         }
@@ -145,6 +145,33 @@ namespace Ayurveda_chatBot.Services.Implementations
                     CreatedAt = x.CreatedAt
                 })
                 .ToListAsync();
+        }
+
+
+        public async Task<string> DeleteChatAsync(Guid chatId)
+        {
+            var chat = await _context.ChatHistories.FirstOrDefaultAsync(x => x.Id == chatId);
+
+            _context.ChatHistories.Remove(chat);
+            int n = await _context.SaveChangesAsync();
+
+            if (n > 0) 
+                return "Chat deleted.";
+
+            return "Failed to deleted chat";
+        }
+
+        public async Task<string> DeleteSessionAsync(Guid sessionId)
+        {
+            var session = await _context.ChatSessions.FirstOrDefaultAsync(x => x.Id == sessionId);
+
+            _context.ChatSessions.Remove(session);
+            int n = await _context.SaveChangesAsync();
+
+            if (n > 0)
+                return "Session deleted.";
+
+            return "Failed to deleted session";
         }
     }
 }
