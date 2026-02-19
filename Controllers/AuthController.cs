@@ -6,6 +6,7 @@ using Ayurveda_chatBot.Services.Interface;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
 using System.Security.Claims;
 
 namespace Ayurveda_chatBot.Controllers
@@ -69,6 +70,13 @@ namespace Ayurveda_chatBot.Controllers
                 email = user.Email,
                 isOnboardingCompleted = user.isOnboardingCompleted
             });
+        }
+
+        [HttpPost("social-login")]
+        public async Task<IActionResult> SocialLogin([FromBody] SocialLoginDto dto)
+        {
+            var token = await _authService.SocialLoginAsync(dto);
+            return Ok(new { token });
         }
 
         [Authorize]

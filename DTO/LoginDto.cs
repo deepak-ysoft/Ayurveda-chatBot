@@ -6,4 +6,13 @@
         public string Password { get; set; }
     }
 
+    public class SocialLoginDto
+    {
+        // ID token received from frontend (VERY IMPORTANT)
+        public string IdToken { get; set; } = string.Empty;
+
+        // "google" or "microsoft"
+        public string? Provider { get; set; }
+        public string? ProviderId { get; set; }
+    }
 }

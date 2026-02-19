@@ -10,5 +10,7 @@
         public string? Diet { get; set; }
         public string? Weight { get; set; }
         public bool isOnboardingCompleted { get; set; } = false;
+        public string? Provider { get; set; }
+        public string? ProviderId { get; set; }
     }
 }
