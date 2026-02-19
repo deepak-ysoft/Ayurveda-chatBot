@@ -8,4 +8,12 @@
         public string DietAdvice { get; set; }
         public string LifestyleAdvice { get; set; }
     }
+
+    public class UserSavedDosha : BaseEntity
+    {
+        public Guid UserId { get; set; }
+        public Guid DoshaId { get; set; }
+        public User User { get; set; }
+        public Dosha Dosha { get; set; }
+    }
 }

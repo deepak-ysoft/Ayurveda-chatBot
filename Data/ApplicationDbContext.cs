@@ -12,7 +12,9 @@ namespace Ayurveda_chatBot.Data
         public DbSet<Herb> Herbs { get; set; }
         public DbSet<ChatHistory> ChatHistories { get; set; }
         public DbSet<User> Users { get; set; }
-        public DbSet<ChatSession> ChatSessions { get; set; }
         public DbSet<UserSavedHerb> UserSavedHerbs { get; set; }
+        public DbSet<UserSavedDosha> UserSavedDoshas { get; set; }
+
+        //public DbSet<ChatSession> ChatSessions { get; set; }
     }
 }

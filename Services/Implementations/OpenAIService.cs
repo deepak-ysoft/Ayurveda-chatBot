@@ -1,4 +1,5 @@
 ﻿using Ayurveda_chatBot.DTO;
+using Ayurveda_chatBot.Models;
 using Ayurveda_chatBot.Services.Interface;
 using Microsoft.VisualBasic;
 using OpenAI.Assistants;
@@ -16,7 +17,10 @@ namespace Ayurveda_chatBot.Services.Implementations
             _configuration = configuration;
         }
 
-        public async Task<string> GetResponseAsync(string userMessage)
+        public async Task<string> GetResponseAsync(
+     string userMessage,
+     User user,
+     Dosha dosha)
         {
             var apiKey = _configuration["Groq:ApiKey"];
             var model = _configuration["Groq:Model"];
@@ -25,23 +29,39 @@ namespace Ayurveda_chatBot.Services.Implementations
             client.DefaultRequestHeaders.Authorization =
                 new AuthenticationHeaderValue("Bearer", apiKey);
 
+            var systemPrompt = $@"
+You are an Ayurvedic educational wellness assistant.
+
+User Profile:
+Age: {user.Age}
+Gender: {user.Gender}
+Diet: {user.Diet}
+Weight: {user.Weight}
+
+Primary Dosha: {dosha.Name}
+
+Dosha Details:
+Qualities: {dosha.Qualities}
+Common Imbalance Symptoms: {dosha.ImbalanceSymptoms}
+Diet Advice: {dosha.DietAdvice}
+Lifestyle Advice: {dosha.LifestyleAdvice}
+
+Rules:
+- Respond strictly using Ayurvedic principles.
+- Personalize response based on user's dosha.
+- Do NOT provide dosage.
+- Do NOT claim cure.
+- If severe symptoms appear advise immediate medical attention.
+- Always include disclaimer at the end.
+";
+
             var requestBody = new
             {
                 model = model,
                 messages = new[]
                 {
-            new {
-                role = "system",
-                content = @"You are an Ayurvedic educational wellness assistant.
-Do NOT provide dosage.
-Do NOT claim cure.
-If severe symptoms appear advise immediate medical attention.
-Always include disclaimer."
-            },
-            new {
-                role = "user",
-                content = userMessage
-            }
+            new { role = "system", content = systemPrompt },
+            new { role = "user", content = userMessage }
         }
             };
 
@@ -52,19 +72,15 @@ Always include disclaimer."
             var content = await response.Content.ReadAsStringAsync();
 
             if (!response.IsSuccessStatusCode)
-            {
                 return $"Groq Error: {content}";
-            }
 
             var result = JsonSerializer.Deserialize<OpenAIResponseDto>(
                 content,
-                new JsonSerializerOptions
-                {
-                    PropertyNameCaseInsensitive = true
-                });
+                new JsonSerializerOptions { PropertyNameCaseInsensitive = true });
 
             return result?.Choices?.FirstOrDefault()?.Message?.Content
                    ?? "No response from AI.";
         }
+
     }
 }

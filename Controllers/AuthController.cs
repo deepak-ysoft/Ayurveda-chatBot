@@ -2,8 +2,11 @@
 using Ayurveda_chatBot.DTO;
 using Ayurveda_chatBot.Helpers;
 using Ayurveda_chatBot.Models;
+using Ayurveda_chatBot.Services.Interface;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
+using System.Security.Claims;
 
 namespace Ayurveda_chatBot.Controllers
 {
@@ -12,12 +15,14 @@ namespace Ayurveda_chatBot.Controllers
     public class AuthController : ControllerBase
     {
         private readonly ApplicationDbContext _context;
+        private readonly IAuthService _authService;
         private readonly JwtTokenGenerator _jwtGenerator;
 
-        public AuthController(ApplicationDbContext context,
+        public AuthController(ApplicationDbContext context, IAuthService authService,
                               JwtTokenGenerator jwtGenerator)
         {
             _context = context;
+            _authService = authService;
             _jwtGenerator = jwtGenerator;
         }
 
@@ -38,7 +43,9 @@ namespace Ayurveda_chatBot.Controllers
             _context.Users.Add(user);
             await _context.SaveChangesAsync();
 
-            return Ok("User registered successfully.");
+            var token = _jwtGenerator.GenerateToken(user);
+
+            return Ok(new { token, message = "User registered successfully." });
         }
 
         [HttpPost("login")]
@@ -63,6 +70,17 @@ namespace Ayurveda_chatBot.Controllers
                 email = user.Email
             });
         }
-    }
 
+        [Authorize]
+        [HttpPost("onboarding")]
+        public async Task<IActionResult> CompleteOnboarding(OnboardingDto model)
+        {
+            var userId = Guid.Parse(
+                User.FindFirst(ClaimTypes.NameIdentifier)?.Value);
+
+            var result = await _authService.CompleteOnboardingAsync(userId, model);
+
+            return Ok(new { message = result });
+        }
+    }
 }

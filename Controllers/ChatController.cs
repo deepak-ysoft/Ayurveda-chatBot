@@ -18,6 +18,7 @@ namespace Ayurveda_chatBot.Controllers
         {
             _chatService = chatService;
         }
+
         [HttpPost("send")]
         public async Task<IActionResult> SendMessage(ChatRequestDto model)
         {

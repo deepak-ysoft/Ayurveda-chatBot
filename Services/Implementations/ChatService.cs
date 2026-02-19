@@ -20,6 +20,7 @@ namespace Ayurveda_chatBot.Services.Implementations
 
         public async Task<ChatResponseDto> ProcessMessage(Guid userId, string message)
         {
+            // Emergency check (rule-based safety)
             if (EmergencyChecker.IsEmergency(message))
             {
                 return new ChatResponseDto
@@ -29,8 +30,28 @@ namespace Ayurveda_chatBot.Services.Implementations
                 };
             }
 
-            var aiResponse = await _openAIService.GetResponseAsync(message);
+            // Get user
+            var user = await _context.Users
+                .FirstOrDefaultAsync(x => x.Id == userId && !x.IsDeleted);
 
+            if (user == null)
+                throw new Exception("User not found.");
+
+            // Get user dosha
+            var userDosha = await _context.UserSavedDoshas
+                .Include(x => x.Dosha)
+                .FirstOrDefaultAsync(x => x.UserId == userId && !x.IsDeleted);
+
+            if (userDosha == null)
+                throw new Exception("User has not completed onboarding.");
+
+            // Call AI with context
+            var aiResponse = await _openAIService.GetResponseAsync(
+                message,
+                user,
+                userDosha.Dosha);
+
+            // Save chat history
             var chat = new ChatHistory
             {
                 UserId = userId,
@@ -41,6 +62,7 @@ namespace Ayurveda_chatBot.Services.Implementations
             _context.ChatHistories.Add(chat);
             await _context.SaveChangesAsync();
 
+            // Return response
             return new ChatResponseDto
             {
                 Answer = aiResponse,
@@ -52,7 +74,7 @@ namespace Ayurveda_chatBot.Services.Implementations
         {
             return await _context.ChatHistories
                 .Where(x => x.UserId == userId && !x.IsDeleted)
-                .OrderByDescending(x => x.CreatedAt)
+                .OrderBy(x => x.CreatedAt)
                 .Select(x => new ChatHistoryDto
                 {
                     Question = x.UserQuestion,
