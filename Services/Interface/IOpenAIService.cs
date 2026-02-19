@@ -7,6 +7,6 @@ namespace Ayurveda_chatBot.Services.Interface
         Task<string> GetResponseAsync(
             string userMessage,
             User user,
-            Dosha dosha);
+            Dosha dosha,List<ChatHistory> chatHistory);
     }
 }

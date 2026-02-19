@@ -20,7 +20,7 @@ namespace Ayurveda_chatBot.Services.Implementations
         public async Task<string> GetResponseAsync(
      string userMessage,
      User user,
-     Dosha dosha)
+     Dosha dosha, List<ChatHistory> chatHistory)
         {
             var apiKey = _configuration["Groq:ApiKey"];
             var model = _configuration["Groq:Model"];
@@ -28,6 +28,19 @@ namespace Ayurveda_chatBot.Services.Implementations
             using var client = new HttpClient();
             client.DefaultRequestHeaders.Authorization =
                 new AuthenticationHeaderValue("Bearer", apiKey);
+
+
+            string summarizedContext = "";
+
+            if (chatHistory.Any())
+            {
+                var combined = string.Join("\n\n",
+                    chatHistory.Select(x =>
+                        $"User: {x.UserQuestion}\nAI: {x.BotResponse}"));
+
+                summarizedContext = await SummarizeAsync(combined);
+            }
+
 
             var systemPrompt = $@"
 You are an Ayurvedic educational wellness assistant.
@@ -40,19 +53,17 @@ Weight: {user.Weight}
 
 Primary Dosha: {dosha.Name}
 
-Dosha Details:
-Qualities: {dosha.Qualities}
-Common Imbalance Symptoms: {dosha.ImbalanceSymptoms}
-Diet Advice: {dosha.DietAdvice}
-Lifestyle Advice: {dosha.LifestyleAdvice}
+Previous Conversation Summary:
+{summarizedContext}
 
-Rules:
+Instructions:
+- If current question relates to previous conversation, continue accordingly.
+- If unrelated, ignore previous summary.
 - Respond strictly using Ayurvedic principles.
-- Personalize response based on user's dosha.
-- Do NOT provide dosage.
-- Do NOT claim cure.
-- If severe symptoms appear advise immediate medical attention.
-- Always include disclaimer at the end.
+- No dosage.
+- No cure claims.
+- Advise medical attention if severe.
+- Add disclaimer.
 ";
 
             var requestBody = new
@@ -81,5 +92,44 @@ Rules:
             return result?.Choices?.FirstOrDefault()?.Message?.Content
                    ?? "No response from AI.";
         }
+
+        public async Task<string> SummarizeAsync(string content)
+        {
+            var apiKey = _configuration["Groq:ApiKey"];
+            var model = _configuration["Groq:Model"];
+
+            using var client = new HttpClient();
+            client.DefaultRequestHeaders.Authorization =
+                new AuthenticationHeaderValue("Bearer", apiKey);
+
+            var requestBody = new
+            {
+                model = model,
+                messages = new[]
+                {
+            new {
+                role = "system",
+                content = "Summarize the following Ayurvedic conversation briefly in 4-5 lines preserving important health context."
+            },
+            new {
+                role = "user",
+                content = content
+            }
+        }
+            };
+
+            var response = await client.PostAsJsonAsync(
+                "https://api.groq.com/openai/v1/chat/completions",
+                requestBody);
+
+            var resultJson = await response.Content.ReadAsStringAsync();
+
+            var result = JsonSerializer.Deserialize<OpenAIResponseDto>(
+                resultJson,
+                new JsonSerializerOptions { PropertyNameCaseInsensitive = true });
+
+            return result?.Choices?.FirstOrDefault()?.Message?.Content ?? "";
+        }
+
     }
 }

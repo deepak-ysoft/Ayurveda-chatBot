@@ -45,11 +45,18 @@ namespace Ayurveda_chatBot.Services.Implementations
             if (userDosha == null)
                 throw new Exception("User has not completed onboarding.");
 
+            var previousChats = await _context.ChatHistories
+      .Where(x => x.UserId == userId && !x.IsDeleted)
+      .OrderByDescending(x => x.CreatedAt)
+      .Take(3)
+      .OrderBy(x => x.CreatedAt)
+      .ToListAsync();
+
             // Call AI with context
             var aiResponse = await _openAIService.GetResponseAsync(
                 message,
                 user,
-                userDosha.Dosha);
+                userDosha.Dosha, previousChats);
 
             // Save chat history
             var chat = new ChatHistory

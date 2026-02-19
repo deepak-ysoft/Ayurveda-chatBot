@@ -29,7 +29,8 @@ namespace Ayurveda_chatBot.Services.Implementations
             user.Gender = model.Gender;
             user.Diet = model.Diet;
             user.Weight = model.Weight;
-            user.UpdatedAt = DateTime.UtcNow;
+            user.UpdatedAt = DateTime.UtcNow; 
+            user.isOnboardingCompleted = true;
 
             // Find Dosha by name
             var dosha = await _context.Doshas

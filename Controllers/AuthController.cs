@@ -66,7 +66,8 @@ namespace Ayurveda_chatBot.Controllers
                 token,
                 userId = user.Id,
                 name = user.Name,
-                email = user.Email
+                email = user.Email,
+                isOnboardingCompleted = user.isOnboardingCompleted
             });
         }
 

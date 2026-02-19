@@ -9,5 +9,6 @@
         public string? Gender { get; set; }
         public string? Diet { get; set; }
         public string? Weight { get; set; }
+        public bool isOnboardingCompleted { get; set; } = false;
     }
 }
