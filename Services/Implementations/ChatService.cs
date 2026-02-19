@@ -44,6 +44,22 @@ namespace Ayurveda_chatBot.Services.Implementations
                 };
             }
 
+            Guid sessionId = dto.ChatSessionId ?? Guid.Empty;
+
+            if (dto.ChatSessionId == Guid.Empty)
+            {
+                // create new session
+                var session = new ChatSession()
+                {
+                    UserId = userId,
+                    SessionName = GenerateSessionTitle(dto.message)
+                };
+
+                await _context.ChatSessions.AddAsync(session);
+                await _context.SaveChangesAsync();
+                sessionId = session.Id;
+            }
+
             // Get user
             var user = await _context.Users
                 .FirstOrDefaultAsync(x => x.Id == userId && !x.IsDeleted);
@@ -76,7 +92,7 @@ namespace Ayurveda_chatBot.Services.Implementations
             // Save chat history
             var chat = new ChatHistory
             {
-                ChatSessionId = dto.ChatSessionId,
+                ChatSessionId = sessionId,
                 UserQuestion = dto.message,
                 BotResponse = aiResponse
             };
@@ -90,6 +106,23 @@ namespace Ayurveda_chatBot.Services.Implementations
                 Answer = aiResponse,
                 Disclaimer = "This assistant provides educational Ayurvedic wellness information only. It does not replace professional medical consultation."
             };
+        }
+
+        private string GenerateSessionTitle(string message)
+        {
+            if (string.IsNullOrWhiteSpace(message))
+                return "New Chat";
+
+            message = message.Trim();
+
+            // Remove line breaks
+            message = message.Replace("\n", " ").Replace("\r", "");
+
+            // Limit to 20 characters
+            if (message.Length > 20)
+                message = message.Substring(0, 20) + "...";
+
+            return message;
         }
 
         public async Task<List<ChatSession>> GetUserSessionsAsync(Guid userId)

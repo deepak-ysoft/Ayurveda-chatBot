@@ -24,7 +24,7 @@
 
     public class SendMessageDto
     {
-        public Guid ChatSessionId { get; set; }
+        public Guid? ChatSessionId { get; set; }
         public string message { get; set; } = string.Empty;
     }
 }
