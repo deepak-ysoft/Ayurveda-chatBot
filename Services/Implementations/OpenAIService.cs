@@ -3,6 +3,7 @@ using Ayurveda_chatBot.Services.Interface;
 using Microsoft.VisualBasic;
 using OpenAI.Assistants;
 using System.Net.Http.Headers;
+using System.Text.Json;
 
 namespace Ayurveda_chatBot.Services.Implementations
 {
@@ -18,6 +19,7 @@ namespace Ayurveda_chatBot.Services.Implementations
         public async Task<string> GetResponseAsync(string userMessage)
         {
             var apiKey = _configuration["Groq:ApiKey"];
+            var model = _configuration["Groq:Model"];
 
             using var client = new HttpClient();
             client.DefaultRequestHeaders.Authorization =
@@ -25,7 +27,7 @@ namespace Ayurveda_chatBot.Services.Implementations
 
             var requestBody = new
             {
-                model = "llama3-8b-8192",
+                model = model,
                 messages = new[]
                 {
             new {
@@ -47,17 +49,22 @@ Always include disclaimer."
                 "https://api.groq.com/openai/v1/chat/completions",
                 requestBody);
 
+            var content = await response.Content.ReadAsStringAsync();
+
             if (!response.IsSuccessStatusCode)
             {
-                var error = await response.Content.ReadAsStringAsync();
-                return "⚠️ AI service unavailable.";
+                return $"Groq Error: {content}";
             }
 
-            var result = await response.Content.ReadFromJsonAsync<OpenAIResponseDto>();
+            var result = JsonSerializer.Deserialize<OpenAIResponseDto>(
+                content,
+                new JsonSerializerOptions
+                {
+                    PropertyNameCaseInsensitive = true
+                });
 
             return result?.Choices?.FirstOrDefault()?.Message?.Content
                    ?? "No response from AI.";
         }
-
     }
 }

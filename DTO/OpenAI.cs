@@ -2,15 +2,15 @@
 {
     public class OpenAIResponseDto
     {
-        public List<ChoiceDto> Choices { get; set; }
+        public List<Choice> Choices { get; set; }
     }
 
-    public class ChoiceDto
+    public class Choice
     {
-        public MessageDto Message { get; set; }
+        public Message Message { get; set; }
     }
 
-    public class MessageDto
+    public class Message
     {
         public string Role { get; set; }
         public string Content { get; set; }

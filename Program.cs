@@ -106,9 +106,7 @@ app.UseAuthorization();
 
 app.MapControllers();
 
-app.MapGet("/", () => "Ayurveda ChatBot API is running 🚀");
-
-var port = Environment.GetEnvironmentVariable("PORT") ?? "5000";
-app.Urls.Add($"http://*:{port}");
+//var port = Environment.GetEnvironmentVariable("PORT") ?? "5000";
+//app.Urls.Add($"http://*:{port}");
 
 app.Run();
