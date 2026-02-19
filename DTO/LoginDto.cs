@@ -20,7 +20,4 @@
         public string token { get; set; }
         public bool isOnboardingCompleted { get; set; }
     }
-
-
-
 }

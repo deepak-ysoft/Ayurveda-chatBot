@@ -35,7 +35,7 @@ namespace Ayurveda_chatBot.Services.Implementations
 
                 email = payload.Email;
                 name = payload.Name;
-                providerUserId = payload.Subject;
+                providerUserId = dto.ProviderId;
             }
             else
             {
@@ -43,7 +43,7 @@ namespace Ayurveda_chatBot.Services.Implementations
             }
 
             var user = await _context.Users
-                .FirstOrDefaultAsync(x => x.ProviderId == providerUserId);
+                .FirstOrDefaultAsync(x => x.Email == email);
 
             if (user == null)
             {
