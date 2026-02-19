@@ -46,7 +46,7 @@ namespace Ayurveda_chatBot.Services.Implementations
 
             Guid sessionId = dto.ChatSessionId ?? Guid.Empty;
 
-            if (dto.ChatSessionId == Guid.Empty)
+            if (dto.ChatSessionId is null || dto.ChatSessionId == Guid.Empty)
             {
                 // create new session
                 var session = new ChatSession()
