@@ -36,7 +36,6 @@ namespace Ayurveda_chatBot.Controllers
             {
                 Name = dto.Name,
                 Email = dto.Email,
-                PhoneNumber = dto.PhoneNumber,
                 PasswordHash = PasswordHasher.HashPassword(dto.Password)
             };
 

@@ -81,6 +81,5 @@ Rules:
             return result?.Choices?.FirstOrDefault()?.Message?.Content
                    ?? "No response from AI.";
         }
-
     }
 }
