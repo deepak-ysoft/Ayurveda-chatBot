@@ -17,11 +17,24 @@ namespace Ayurveda_chatBot.Services.Implementations
             _openAIService = openAIService;
             _context = context;
         }
+        public async Task<Guid> CreateSessionAsync(Guid userId, string sessionName)
+        {
+            var session = new ChatSession
+            {
+                UserId = userId,
+                SessionName = sessionName
+            };
 
-        public async Task<ChatResponseDto> ProcessMessage(Guid userId, string message)
+            _context.ChatSessions.Add(session);
+            await _context.SaveChangesAsync();
+
+            return session.Id;
+        }
+
+        public async Task<ChatResponseDto> ProcessMessage(Guid userId, SendMessageDto dto)
         {
             // Emergency check (rule-based safety)
-            if (EmergencyChecker.IsEmergency(message))
+            if (EmergencyChecker.IsEmergency(dto.message))
             {
                 return new ChatResponseDto
                 {
@@ -46,23 +59,24 @@ namespace Ayurveda_chatBot.Services.Implementations
                 throw new Exception("User has not completed onboarding.");
 
             var previousChats = await _context.ChatHistories
-      .Where(x => x.UserId == userId && !x.IsDeleted)
-      .OrderByDescending(x => x.CreatedAt)
-      .Take(3)
-      .OrderBy(x => x.CreatedAt)
-      .ToListAsync();
+             .Include(x => x.Session)
+             .Where(x => x.Session.UserId == userId && !x.IsDeleted)
+             .OrderByDescending(x => x.CreatedAt)
+             .Take(3)
+             .OrderBy(x => x.CreatedAt)
+             .ToListAsync();
 
             // Call AI with context
             var aiResponse = await _openAIService.GetResponseAsync(
-                message,
+                dto.message,
                 user,
                 userDosha.Dosha, previousChats);
 
             // Save chat history
             var chat = new ChatHistory
             {
-                UserId = userId,
-                UserQuestion = message,
+                ChatSessionId = dto.ChatSessionId,
+                UserQuestion = dto.message,
                 BotResponse = aiResponse
             };
 
@@ -77,10 +91,18 @@ namespace Ayurveda_chatBot.Services.Implementations
             };
         }
 
-        public async Task<List<ChatHistoryDto>> GetUserHistoryAsync(Guid userId)
+        public async Task<List<ChatSession>> GetUserSessionsAsync(Guid userId)
+        {
+            return await _context.ChatSessions
+                .Where(x => x.UserId == userId)
+                .OrderByDescending(x => x.CreatedAt)
+                .ToListAsync();
+        }
+
+        public async Task<List<ChatHistoryDto>> GetUserHistoryAsync(Guid sessionId)
         {
             return await _context.ChatHistories
-                .Where(x => x.UserId == userId && !x.IsDeleted)
+                .Where(x => x.ChatSessionId == sessionId && !x.IsDeleted)
                 .OrderBy(x => x.CreatedAt)
                 .Select(x => new ChatHistoryDto
                 {

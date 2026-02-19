@@ -19,24 +19,46 @@ namespace Ayurveda_chatBot.Controllers
             _chatService = chatService;
         }
 
-        [HttpPost("send")]
-        public async Task<IActionResult> SendMessage(ChatRequestDto model)
+        [HttpPost("create-session")]
+        public async Task<IActionResult> CreateSession(CreateSessionDto dto)
         {
             var userId = Guid.Parse(
                 User.FindFirst(ClaimTypes.NameIdentifier)?.Value);
 
-            var result = await _chatService.ProcessMessage(userId, model.Message);
+            var sessionId = await _chatService.CreateSessionAsync(userId, dto.SessionName);
+
+            return Ok(new { sessionId });
+        }
+
+        [HttpPost("send")]
+        public async Task<IActionResult> SendMessage(SendMessageDto dto)
+        {
+            var userId = Guid.Parse(
+                User.FindFirst(ClaimTypes.NameIdentifier)?.Value);
+
+            var result = await _chatService.ProcessMessage(userId, dto);
 
             return Ok(result);
         }
 
-        [HttpGet("history")]
-        public async Task<IActionResult> GetHistory()
+        [HttpGet("sessions")]
+        public async Task<IActionResult> GetSessions()
         {
             var userId = Guid.Parse(
                 User.FindFirst(ClaimTypes.NameIdentifier)?.Value);
 
-            var history = await _chatService.GetUserHistoryAsync(userId);
+            var sessions = await _chatService.GetUserSessionsAsync(userId);
+
+            return Ok(sessions);
+        }
+
+        [HttpGet("history/{sessionId}")]
+        public async Task<IActionResult> GetHistory(Guid sessionId)
+        {
+            var userId = Guid.Parse(
+                User.FindFirst(ClaimTypes.NameIdentifier)?.Value);
+
+            var history = await _chatService.GetUserHistoryAsync(sessionId);
 
             return Ok(history);
         }

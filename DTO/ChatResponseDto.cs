@@ -16,4 +16,15 @@
         public string Answer { get; set; }
         public DateTime CreatedAt { get; set; }
     }
+
+    public class CreateSessionDto
+    {
+        public string SessionName { get; set; } = string.Empty;
+    }
+
+    public class SendMessageDto
+    {
+        public Guid ChatSessionId { get; set; }
+        public string message { get; set; } = string.Empty;
+    }
 }
