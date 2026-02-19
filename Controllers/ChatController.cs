@@ -7,6 +7,7 @@ using System.Security.Claims;
 
 namespace Ayurveda_chatBot.Controllers
 {
+    [Authorize]
     [Route("api/[controller]")]
     [ApiController]
     public class ChatController : ControllerBase
@@ -17,8 +18,7 @@ namespace Ayurveda_chatBot.Controllers
         {
             _chatService = chatService;
         }
-        [Authorize]
-        [HttpPost]
+        [HttpPost("send")]
         public async Task<IActionResult> SendMessage(ChatRequestDto model)
         {
             var userId = Guid.Parse(
@@ -27,6 +27,17 @@ namespace Ayurveda_chatBot.Controllers
             var result = await _chatService.ProcessMessage(userId, model.Message);
 
             return Ok(result);
+        }
+
+        [HttpGet("history")]
+        public async Task<IActionResult> GetHistory()
+        {
+            var userId = Guid.Parse(
+                User.FindFirst(ClaimTypes.NameIdentifier)?.Value);
+
+            var history = await _chatService.GetUserHistoryAsync(userId);
+
+            return Ok(history);
         }
     }
 }

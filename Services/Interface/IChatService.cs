@@ -4,6 +4,8 @@ namespace Ayurveda_chatBot.Services.Interface
 {
     public interface IChatService
     {
-        Task<ChatResponseDto> ProcessMessage(Guid userId, string message);
+        Task<ChatResponseDto> ProcessMessage(Guid userId, string message); 
+        Task<List<ChatHistoryDto>> GetUserHistoryAsync(Guid userId);
+
     }
 }

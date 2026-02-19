@@ -3,6 +3,7 @@ using Ayurveda_chatBot.DTO;
 using Ayurveda_chatBot.Helpers;
 using Ayurveda_chatBot.Models;
 using Ayurveda_chatBot.Services.Interface;
+using Microsoft.EntityFrameworkCore;
 
 namespace Ayurveda_chatBot.Services.Implementations
 {
@@ -45,6 +46,20 @@ namespace Ayurveda_chatBot.Services.Implementations
                 Answer = aiResponse,
                 Disclaimer = "This assistant provides educational Ayurvedic wellness information only. It does not replace professional medical consultation."
             };
+        }
+
+        public async Task<List<ChatHistoryDto>> GetUserHistoryAsync(Guid userId)
+        {
+            return await _context.ChatHistories
+                .Where(x => x.UserId == userId && !x.IsDeleted)
+                .OrderByDescending(x => x.CreatedAt)
+                .Select(x => new ChatHistoryDto
+                {
+                    Question = x.UserQuestion,
+                    Answer = x.BotResponse,
+                    CreatedAt = x.CreatedAt
+                })
+                .ToListAsync();
         }
     }
 }

@@ -10,4 +10,10 @@
     {
         public string Message { get; set; }
     }
+    public class ChatHistoryDto
+    {
+        public string Question { get; set; }
+        public string Answer { get; set; }
+        public DateTime CreatedAt { get; set; }
+    }
 }
