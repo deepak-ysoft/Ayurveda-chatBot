@@ -23,7 +23,7 @@ namespace Ayurveda_chatBot.Services.Implementations
             _jwtGenerator = jwtGenerator;
         }
 
-        public async Task<dynamic> SocialLoginAsync(SocialLoginDto dto)
+        public async Task<SocialLoginResponseDto> SocialLoginAsync(SocialLoginDto dto)
         {
             string email = "";
             string name = "";
@@ -60,7 +60,11 @@ namespace Ayurveda_chatBot.Services.Implementations
                 await _context.SaveChangesAsync();
             }
             var token = _jwtGenerator.GenerateToken(user);
-            return (token, user.isOnboardingCompleted);
+            return new SocialLoginResponseDto
+            {
+                token = token,
+                isOnboardingCompleted = user.isOnboardingCompleted
+            };
         }
 
         public async Task<string> CompleteOnboardingAsync(Guid userId, OnboardingDto model)

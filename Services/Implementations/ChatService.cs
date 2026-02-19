@@ -17,6 +17,7 @@ namespace Ayurveda_chatBot.Services.Implementations
             _openAIService = openAIService;
             _context = context;
         }
+
         public async Task<Guid> CreateSessionAsync(Guid userId, string sessionName)
         {
             var session = new ChatSession

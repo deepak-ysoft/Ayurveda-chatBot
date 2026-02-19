@@ -5,6 +5,6 @@ namespace Ayurveda_chatBot.Services.Interface
     public interface IAuthService
     {
         Task<string> CompleteOnboardingAsync(Guid userId, OnboardingDto model); 
-        Task<dynamic> SocialLoginAsync(SocialLoginDto dto);
+        Task<SocialLoginResponseDto> SocialLoginAsync(SocialLoginDto dto);
     }
 }

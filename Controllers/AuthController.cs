@@ -76,7 +76,7 @@ namespace Ayurveda_chatBot.Controllers
         public async Task<IActionResult> SocialLogin([FromBody] SocialLoginDto dto)
         {
             var token = await _authService.SocialLoginAsync(dto);
-            return Ok(new { token });
+            return Ok(token);
         }
 
         [Authorize]
