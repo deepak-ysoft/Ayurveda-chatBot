@@ -34,6 +34,7 @@ namespace Ayurveda_chatBot.Services.Implementations
 
             return session.Id;
         }
+
         public async Task ProcessMessageStream(
             Guid userId,
             SendMessageDto dto,
@@ -90,8 +91,10 @@ namespace Ayurveda_chatBot.Services.Implementations
                 sessionId = dto.ChatSessionId.Value;
             }
 
-            // ✅ Add SessionId to Header BEFORE streaming
             response.Headers.Add("X-Session-Id", sessionId.ToString());
+
+            // Send session event first
+            await response.Body.FlushAsync();
 
             // 🔥 System Prompt
             var systemPrompt = $@"
@@ -196,6 +199,7 @@ Failure to follow this structure is not allowed.
             _context.ChatHistories.Add(chat);
             await _context.SaveChangesAsync();
         }
+
         private async Task<string> StreamFromGroq(
             string systemPrompt,
             string userMessage,
@@ -285,6 +289,7 @@ Failure to follow this structure is not allowed.
 
             return fullResponse;
         }
+
         private string GenerateSessionTitle(string message)
         {
             if (string.IsNullOrWhiteSpace(message))
