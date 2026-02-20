@@ -6,5 +6,6 @@ namespace Ayurveda_chatBot.Services.Interface
     {
         Task<string> CompleteOnboardingAsync(Guid userId, OnboardingDto model); 
         Task<SocialLoginResponseDto> SocialLoginAsync(SocialLoginDto dto);
+        Task<ProfileResponseDto> GetProfileAsync(Guid userId);
     }
 }

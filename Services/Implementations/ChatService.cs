@@ -238,6 +238,8 @@ Failure to follow this structure is not allowed.
 
             string fullResponse = "";
 
+            string buffer = "";
+
             while (!reader.EndOfStream)
             {
                 var line = await reader.ReadLineAsync();
@@ -250,9 +252,7 @@ Failure to follow this structure is not allowed.
                 var json = line.Substring(6);
 
                 if (json == "[DONE]")
-                {
                     break;
-                }
 
                 try
                 {
@@ -271,10 +271,21 @@ Failure to follow this structure is not allowed.
                     if (!string.IsNullOrEmpty(content))
                     {
                         fullResponse += content;
+                        buffer += content;
 
-                        // Proper SSE format
-                        await response.WriteAsync($"data: {content}\n\n");
-                        await response.Body.FlushAsync();
+                        // Send only when a word completes
+                        while (buffer.Contains(" ") || buffer.Contains("\n"))
+                        {
+                            int spaceIndex = buffer.IndexOfAny(new[] { ' ', '\n' });
+
+                            if (spaceIndex == -1) break;
+
+                            var word = buffer.Substring(0, spaceIndex + 1);
+                            buffer = buffer.Substring(spaceIndex + 1);
+
+                            await response.WriteAsync($"data: {word}\n\n");
+                            await response.Body.FlushAsync();
+                        }
                     }
                 }
                 catch
@@ -283,10 +294,12 @@ Failure to follow this structure is not allowed.
                 }
             }
 
-            // Send DONE event properly
-            await response.WriteAsync("data: [DONE]\n\n");
-            await response.Body.FlushAsync();
-
+            // Send remaining buffer
+            if (!string.IsNullOrWhiteSpace(buffer))
+            {
+                await response.WriteAsync($"data: {buffer}\n\n");
+                await response.Body.FlushAsync();
+            }
             return fullResponse;
         }
 

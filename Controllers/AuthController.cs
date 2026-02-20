@@ -72,6 +72,16 @@ namespace Ayurveda_chatBot.Controllers
             });
         }
 
+        [HttpGet("profile")]
+        public async Task<IActionResult> GetProfile()
+        {
+            var userId = Guid.Parse(
+                User.FindFirst(ClaimTypes.NameIdentifier)?.Value);
+
+            var res = await _authService.GetProfileAsync(userId);
+            return Ok(res);
+        }
+
         [HttpPost("social-login")]
         public async Task<IActionResult> SocialLogin([FromBody] SocialLoginDto dto)
         {

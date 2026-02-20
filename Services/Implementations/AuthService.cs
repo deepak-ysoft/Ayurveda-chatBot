@@ -67,6 +67,25 @@ namespace Ayurveda_chatBot.Services.Implementations
             };
         }
 
+        public async Task<ProfileResponseDto> GetProfileAsync(Guid userId)
+        {
+            var user = await _context.Users
+                .FirstOrDefaultAsync(x => x.Id == userId && !x.IsDeleted);
+            if (user == null)
+                throw new Exception("User not found");
+            var userDosha = await _context.UserSavedDoshas
+                .Include(x => x.Dosha)
+                .FirstOrDefaultAsync(x => x.UserId == userId && !x.IsDeleted);
+            return new ProfileResponseDto
+            {
+                Age = user.Age??0,
+                Gender = user.Gender,
+                Diet = user.Diet,
+                Weight = user.Weight,
+                Dosha = userDosha?.Dosha?.Name
+            };
+        }
+
         public async Task<string> CompleteOnboardingAsync(Guid userId, OnboardingDto model)
         {
             var user = await _context.Users
