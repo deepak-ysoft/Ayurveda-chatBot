@@ -181,6 +181,9 @@ Failure to follow this structure is not allowed.
                 sessionId = dto.ChatSessionId.Value;
             }
 
+            // ✅ Add SessionId to Header BEFORE streaming
+            response.Headers.Add("X-Session-Id", sessionId.ToString());
+
             // 🔹 Save Chat After Complete
             var chat = new ChatHistory
             {
