@@ -114,20 +114,12 @@ namespace Ayurveda_chatBot.Services.Implementations
         }
 
         public async Task ProcessMessageStream(
-          Guid userId,
-          SendMessageDto dto,
-          HttpResponse response)
+            Guid userId,
+            SendMessageDto dto,
+            HttpResponse response)
         {
-            var apiKey = _configuration["Groq:ApiKey"];
-            var model = _configuration["Groq:Model"];
-
-            using var client = new HttpClient();
-            client.DefaultRequestHeaders.Authorization =
-                new AuthenticationHeaderValue("Bearer", apiKey);
-
             // 🔹 Get User
-            var user = await _context.Users
-                .FirstOrDefaultAsync(x => x.Id == userId && !x.IsDeleted);
+            var user = await _context.Users.FirstOrDefaultAsync(x => x.Id == userId && !x.IsDeleted);
 
             if (user == null)
                 throw new Exception("User not found.");
@@ -149,18 +141,13 @@ namespace Ayurveda_chatBot.Services.Implementations
                 .OrderBy(x => x.CreatedAt)
                 .ToListAsync();
 
-            string summarizedContext = "";
-
-            if (previousChats.Any())
-            {
-                var combined = string.Join("\n\n",
+            string summarizedContext = previousChats.Any()
+                ? string.Join("\n\n",
                     previousChats.Select(x =>
-                        $"User: {x.UserQuestion}\nAI: {x.BotResponse}"));
+                        $"User: {x.UserQuestion}\nAI: {x.BotResponse}"))
+                : "";
 
-                summarizedContext = combined;
-            }
-
-            // 🔥 YOUR FULL SYSTEM PROMPT
+            // 🔥 System Prompt
             var systemPrompt = $@"
                 You are Veda, a wise and warm Ayurvedic wellness guide — like a knowledgeable 
                 friend who makes ancient wisdom feel exciting and relevant to modern life.
@@ -170,8 +157,8 @@ namespace Ayurveda_chatBot.Services.Implementations
  
                 ## CONVERSATION CONTEXT
                 {(string.IsNullOrEmpty(summarizedContext)
-                    ? "No previous conversation."
-                    : $"Previous Summary: {summarizedContext}")}
+                     ? "No previous conversation."
+                     : $"Previous Summary: {summarizedContext}")}
  
                 ## YOUR PERSONALITY
                 - Speak like a wise, friendly guide — not a textbook
@@ -209,7 +196,37 @@ namespace Ayurveda_chatBot.Services.Implementations
                 ## EXAMPLE TONE (follow this style)
                 Instead of: 'Vata dosha individuals should consume warm foods.'
                 Write: '🌿 Your Vata nature craves warmth — think cozy soups and spiced teas over cold salads.'
-                ";
+            ";
+
+            // 🔹 Call Private Streaming Helper
+            var fullResponse = await StreamFromGroq(
+                systemPrompt,
+                dto.message,
+                response);
+
+            // 🔹 Save Chat After Complete
+            var chat = new ChatHistory
+            {
+                ChatSessionId = dto.ChatSessionId ?? Guid.Empty,
+                UserQuestion = dto.message,
+                BotResponse = fullResponse
+            };
+
+            _context.ChatHistories.Add(chat);
+            await _context.SaveChangesAsync();
+        }
+
+        private async Task<string> StreamFromGroq(
+            string systemPrompt,
+            string userMessage,
+            HttpResponse response)
+        {
+            var apiKey = _configuration["Groq:ApiKey"];
+            var model = _configuration["Groq:Model"];
+
+            using var client = new HttpClient();
+            client.DefaultRequestHeaders.Authorization =
+                new AuthenticationHeaderValue("Bearer", apiKey);
 
             var requestBody = new
             {
@@ -218,7 +235,7 @@ namespace Ayurveda_chatBot.Services.Implementations
                 messages = new[]
                 {
                     new { role = "system", content = systemPrompt },
-                    new { role = "user", content = dto.message }
+                    new { role = "user", content = userMessage }
                 }
             };
 
@@ -275,23 +292,13 @@ namespace Ayurveda_chatBot.Services.Implementations
                     }
                     catch
                     {
-                        // Ignore broken JSON chunks
+                        // ignore broken chunk
                     }
                 }
             }
 
-            // 🔹 Save full response after streaming ends
-            var chat = new ChatHistory
-            {
-                ChatSessionId = dto.ChatSessionId ?? Guid.Empty,
-                UserQuestion = dto.message,
-                BotResponse = fullResponse
-            };
-
-            _context.ChatHistories.Add(chat);
-            await _context.SaveChangesAsync();
+            return fullResponse;
         }
-
         private string GenerateSessionTitle(string message)
         {
             if (string.IsNullOrWhiteSpace(message))
