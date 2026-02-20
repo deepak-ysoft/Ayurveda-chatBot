@@ -41,6 +41,17 @@ namespace Ayurveda_chatBot.Controllers
             return Ok(result);
         }
 
+        [HttpPost("send-stream")]
+        public async Task SendMessageStream(SendMessageDto dto)
+        {
+            Response.Headers.Add("Content-Type", "text/event-stream");
+
+            var userId = Guid.Parse(
+                User.FindFirst(ClaimTypes.NameIdentifier)?.Value);
+
+            await _chatService.ProcessMessageStream(userId, dto, Response);
+        }
+
         [HttpGet("sessions")]
         public async Task<IActionResult> GetSessions()
         {

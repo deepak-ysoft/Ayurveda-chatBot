@@ -84,11 +84,12 @@ Age: {user.Age} | Gender: {user.Gender} | Diet: {user.Diet} | Weight: {user.Weig
             var requestBody = new
             {
                 model = model,
+                stream = true,   // ✅ THIS LINE
                 messages = new[]
                 {
-            new { role = "system", content = systemPrompt },
-            new { role = "user", content = userMessage }
-        }
+                    new { role = "system", content = systemPrompt },
+                    new { role = "user", content = userMessage }
+                }
             };
 
             var response = await client.PostAsJsonAsync(
