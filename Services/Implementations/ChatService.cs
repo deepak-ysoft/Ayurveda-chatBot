@@ -34,14 +34,14 @@ namespace Ayurveda_chatBot.Services.Implementations
 
             return session.Id;
         }
-
         public async Task ProcessMessageStream(
             Guid userId,
             SendMessageDto dto,
             HttpResponse response)
         {
             // 🔹 Get User
-            var user = await _context.Users.FirstOrDefaultAsync(x => x.Id == userId && !x.IsDeleted);
+            var user = await _context.Users
+                .FirstOrDefaultAsync(x => x.Id == userId && !x.IsDeleted);
 
             if (user == null)
                 throw new Exception("User not found.");
@@ -68,6 +68,30 @@ namespace Ayurveda_chatBot.Services.Implementations
                     previousChats.Select(x =>
                         $"User: {x.UserQuestion}\nAI: {x.BotResponse}"))
                 : "";
+
+            // 🔹 Create or Get Session FIRST ✅
+            Guid sessionId;
+
+            if (dto.ChatSessionId == null || dto.ChatSessionId == Guid.Empty)
+            {
+                var newSession = new ChatSession
+                {
+                    UserId = userId,
+                    SessionName = GenerateSessionTitle(dto.message)
+                };
+
+                _context.ChatSessions.Add(newSession);
+                await _context.SaveChangesAsync();
+
+                sessionId = newSession.Id;
+            }
+            else
+            {
+                sessionId = dto.ChatSessionId.Value;
+            }
+
+            // ✅ Add SessionId to Header BEFORE streaming
+            response.Headers.Add("X-Session-Id", sessionId.ToString());
 
             // 🔥 System Prompt
             var systemPrompt = $@"
@@ -154,37 +178,14 @@ Short warm closing line
 
 Failure to follow this structure is not allowed.
 ";
-            // 🔹 Call Private Streaming Helper
+
+            // 🔹 Start Streaming AFTER header is set
             var fullResponse = await StreamFromGroq(
                 systemPrompt,
                 dto.message,
                 response);
 
-            // 🔹 Create or Get Session
-            Guid sessionId;
-
-            if (dto.ChatSessionId == null || dto.ChatSessionId == Guid.Empty)
-            {
-                var newSession = new ChatSession
-                {
-                    UserId = userId,
-                    SessionName = GenerateSessionTitle(dto.message)
-                };
-
-                _context.ChatSessions.Add(newSession);
-                await _context.SaveChangesAsync();
-
-                sessionId = newSession.Id;
-            }
-            else
-            {
-                sessionId = dto.ChatSessionId.Value;
-            }
-
-            // ✅ Add SessionId to Header BEFORE streaming
-            response.Headers.Add("X-Session-Id", sessionId.ToString());
-
-            // 🔹 Save Chat After Complete
+            // 🔹 Save Chat After Stream Complete
             var chat = new ChatHistory
             {
                 ChatSessionId = sessionId,
@@ -195,7 +196,6 @@ Failure to follow this structure is not allowed.
             _context.ChatHistories.Add(chat);
             await _context.SaveChangesAsync();
         }
-
         private async Task<string> StreamFromGroq(
             string systemPrompt,
             string userMessage,
