@@ -6,7 +6,6 @@ namespace Ayurveda_chatBot.Services.Interface
     public interface IChatService
     {
         Task<Guid> CreateSessionAsync(Guid userId, string sessionName);
-        Task<ChatResponseDto> ProcessMessage(Guid userId, SendMessageDto dto);
         Task ProcessMessageStream(Guid userId, SendMessageDto dto, HttpResponse response);
         Task<List<ChatSession>> GetUserSessionsAsync(Guid userId);
         Task<List<ChatHistoryDto>> GetUserHistoryAsync(Guid sessionId);

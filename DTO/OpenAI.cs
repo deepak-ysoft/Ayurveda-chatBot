@@ -15,6 +15,7 @@
         public string Role { get; set; }
         public string Content { get; set; }
     }
+
     public class OpenAIStreamResponseDto
     {
         public List<StreamChoice> Choices { get; set; }
