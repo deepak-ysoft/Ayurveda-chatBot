@@ -29,11 +29,12 @@ namespace Ayurveda_chatBot.Controllers
 
             return Ok(new { sessionId });
         }
-
         [HttpPost("send-stream")]
         public async Task SendMessageStream(SendMessageDto dto)
         {
             Response.Headers.Add("Content-Type", "text/event-stream");
+            Response.Headers.Add("Cache-Control", "no-cache");
+            Response.Headers.Add("Connection", "keep-alive");
 
             var userId = Guid.Parse(
                 User.FindFirst(ClaimTypes.NameIdentifier)?.Value);
