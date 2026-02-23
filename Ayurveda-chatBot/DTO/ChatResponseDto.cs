@@ -2,24 +2,16 @@
 {
     public class ChatResponseDto
     {
+        public Guid SessionId { get; set; }
         public string Answer { get; set; }
-        public string Disclaimer { get; set; }
     }
 
-    public class ChatRequestDto
-    {
-        public string Message { get; set; }
-    }
     public class ChatHistoryDto
     {
+        public Guid Id { get; set; }
         public string Question { get; set; }
         public string Answer { get; set; }
         public DateTime CreatedAt { get; set; }
-    }
-
-    public class CreateSessionDto
-    {
-        public string SessionName { get; set; } = string.Empty;
     }
 
     public class SendMessageDto

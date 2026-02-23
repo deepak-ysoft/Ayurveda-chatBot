@@ -35,7 +35,16 @@ namespace Ayurveda_chatBot.Services.Implementations
 
                 email = payload.Email;
                 name = payload.Name;
-                providerUserId = dto.ProviderId;
+                providerUserId = payload.Subject;
+            }
+            else if (dto.Provider.ToLower() == "microsoft")
+            {
+                var handler = new JwtSecurityTokenHandler();
+                var tokens = handler.ReadJwtToken(dto.IdToken);
+
+                email = tokens.Claims.First(x => x.Type == "preferred_username").Value;
+                name = tokens.Claims.First(x => x.Type == "name").Value;
+                providerUserId = tokens.Claims.First(x => x.Type == "oid").Value;
             }
             else
             {

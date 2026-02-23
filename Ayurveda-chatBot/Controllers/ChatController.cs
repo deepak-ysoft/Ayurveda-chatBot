@@ -19,27 +19,18 @@ namespace Ayurveda_chatBot.Controllers
             _chatService = chatService;
         }
 
-        [HttpPost("create-session")]
-        public async Task<IActionResult> CreateSession(CreateSessionDto dto)
+        [HttpPost("send")]
+        public async Task<IActionResult> SendMessage(SendMessageDto dto)
         {
             var userId = Guid.Parse(
                 User.FindFirst(ClaimTypes.NameIdentifier)?.Value);
 
-            var sessionId = await _chatService.CreateSessionAsync(userId, dto.SessionName);
+            var result = await _chatService.ProcessMessage(userId, dto);
 
-            return Ok(new { sessionId });
-        }
-        [HttpPost("send-stream")]
-        public async Task SendMessageStream(SendMessageDto dto)
-        {
-            Response.Headers.Add("Content-Type", "text/event-stream");
-            Response.Headers.Add("Cache-Control", "no-cache");
-            Response.Headers.Add("Connection", "keep-alive");
+            // ✅ Add SessionId in Header
+            Response.Headers.Add("X-Session-Id", result.SessionId.ToString());
 
-            var userId = Guid.Parse(
-                User.FindFirst(ClaimTypes.NameIdentifier)?.Value);
-
-            await _chatService.ProcessMessageStream(userId, dto, Response);
+            return Ok(result);
         }
 
         [HttpGet("sessions")]
