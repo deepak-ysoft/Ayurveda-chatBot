@@ -23,7 +23,7 @@ namespace Ayurveda_chatBot.Services.Implementations
             _jwtGenerator = jwtGenerator;
         }
 
-        public async Task<SocialLoginResponseDto> SocialLoginAsync(SocialLoginDto dto)
+        public async Task<LoginResponseDto> SocialLoginAsync(SocialLoginDto dto)
         {
             string email = "";
             string name = "";
@@ -31,11 +31,32 @@ namespace Ayurveda_chatBot.Services.Implementations
 
             if (dto.Provider.ToLower() == "google")
             {
-                var payload = await GoogleJsonWebSignature.ValidateAsync(dto.IdToken);
+                try
+                {
+                    var payload = await GoogleJsonWebSignature.ValidateAsync(dto.IdToken);
+                    email = payload.Email;
+                    name = payload.Name;
+                    providerUserId = payload.Subject;
+                }
+                catch (InvalidJwtException)
+                {
+                    // If it's not a valid JWT, it might be an access token
+                    using var client = new HttpClient();
+                    client.DefaultRequestHeaders.Authorization = new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", dto.IdToken);
+                    var response = await client.GetAsync("https://www.googleapis.com/oauth2/v3/userinfo");
 
-                email = payload.Email;
-                name = payload.Name;
-                providerUserId = payload.Subject;
+                    if (!response.IsSuccessStatusCode)
+                    {
+                        throw new Exception("Invalid Google token");
+                    }
+
+                    var content = await response.Content.ReadAsStringAsync();
+                    var googleUser = Newtonsoft.Json.JsonConvert.DeserializeObject<dynamic>(content);
+
+                    email = googleUser.email;
+                    name = googleUser.name;
+                    providerUserId = googleUser.sub;
+                }
             }
             else if (dto.Provider.ToLower() == "microsoft")
             {
@@ -69,9 +90,12 @@ namespace Ayurveda_chatBot.Services.Implementations
                 await _context.SaveChangesAsync();
             }
             var token = _jwtGenerator.GenerateToken(user);
-            return new SocialLoginResponseDto
+            return new LoginResponseDto
             {
-                token = token,
+                token=token,
+                userId = user.Id,
+                name = user.Name,
+                email = user.Email,
                 isOnboardingCompleted = user.isOnboardingCompleted
             };
         }

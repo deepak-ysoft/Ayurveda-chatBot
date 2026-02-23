@@ -45,7 +45,14 @@ namespace Ayurveda_chatBot.Controllers
 
             var token = _jwtGenerator.GenerateToken(user);
 
-            return Ok(new { token, message = "User registered successfully." });
+            return Ok(new LoginResponseDto
+            {
+                token = token,
+                userId = user.Id,
+                name = user.Name,
+                email = user.Email,
+                isOnboardingCompleted = user.isOnboardingCompleted
+            });
         }
 
         [HttpPost("login")]
@@ -62,9 +69,9 @@ namespace Ayurveda_chatBot.Controllers
 
             var token = _jwtGenerator.GenerateToken(user);
 
-            return Ok(new
+            return Ok(new LoginResponseDto
             {
-                token,
+               token= token,
                 userId = user.Id,
                 name = user.Name,
                 email = user.Email,

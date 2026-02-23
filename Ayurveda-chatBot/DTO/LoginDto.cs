@@ -15,9 +15,12 @@
         public string? Provider { get; set; }
         public string? ProviderId { get; set; }
     }
-    public class SocialLoginResponseDto
+    public class LoginResponseDto
     {
         public string token { get; set; }
+        public Guid userId { get; set; }
+        public string email { get; set; }
+        public string name { get; set; }
         public bool isOnboardingCompleted { get; set; }
     }
 }

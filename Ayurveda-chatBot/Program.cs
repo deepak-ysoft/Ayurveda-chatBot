@@ -41,12 +41,13 @@ builder.Services.AddControllers();
 // Register CORS services
 builder.Services.AddCors(options =>
 {
-    options.AddDefaultPolicy(policy =>
+    options.AddPolicy("AllowFrontend", policy =>
     {
-        policy.AllowAnyOrigin()
+        policy.WithOrigins("http://localhost:5173", "http://localhost:5174")
               .AllowAnyHeader()
               .AllowAnyMethod()
-              .WithExposedHeaders("X-Session-Id"); // 🔥 IMPORTANT;
+              .AllowCredentials()
+              .WithExposedHeaders("X-Session-Id"); // 🔥 IMPORTANT
     });
 });
 
@@ -103,7 +104,7 @@ app.UseSwagger();
 app.UseSwaggerUI();
 
 app.UseHttpsRedirection();
-app.UseCors();
+app.UseCors("AllowFrontend");
 app.UseAuthentication();
 app.UseAuthorization();
 
