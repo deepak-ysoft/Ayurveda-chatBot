@@ -4,9 +4,8 @@ using Ayurveda_chatBot.Helpers;
 using Ayurveda_chatBot.Models;
 using Ayurveda_chatBot.Services.Interface;
 using Microsoft.EntityFrameworkCore;
-using System.Net.Http.Headers;
-using System.Security.Cryptography;
-using System.Text.Json;
+using Microsoft.SemanticKernel;
+using Microsoft.SemanticKernel.ChatCompletion;
 
 namespace Ayurveda_chatBot.Services.Implementations
 {
@@ -14,11 +13,13 @@ namespace Ayurveda_chatBot.Services.Implementations
     {
         private readonly ApplicationDbContext _context;
         private readonly IConfiguration _configuration;
+        private readonly Kernel _kernel;
 
-        public ChatService(ApplicationDbContext context,IConfiguration configuration)
+        public ChatService(ApplicationDbContext context, IConfiguration configuration, Kernel kernel)
         {
             _context = context;
             _configuration = configuration;
+            _kernel = kernel;
         }
 
         public async Task<ChatResponseDto> ProcessMessage(Guid userId, SendMessageDto dto)
@@ -72,10 +73,17 @@ namespace Ayurveda_chatBot.Services.Implementations
 
             var systemPrompt = BuildSystemPrompt(user, userDosha, summarizedContext);
 
-            // 🔥 Call Groq Normally (NO STREAM)
-            var fullResponse = await GetGroqResponse(systemPrompt, dto.message);
+            // 🔥 Call Groq using Semantic Kernel
+            var chatCompletionService = _kernel.GetRequiredService<IChatCompletionService>();
+            
+            var history = new Microsoft.SemanticKernel.ChatCompletion.ChatHistory();
+            history.AddSystemMessage(systemPrompt);
+            history.AddUserMessage(dto.message);
 
-            var chat = new ChatHistory
+            var result = await chatCompletionService.GetChatMessageContentAsync(history);
+            var fullResponse = result.Content ?? "";
+
+            var chat = new Ayurveda_chatBot.Models.ChatHistory
             {
                 ChatSessionId = sessionId,
                 UserQuestion = dto.message,
@@ -90,36 +98,6 @@ namespace Ayurveda_chatBot.Services.Implementations
                 Answer = fullResponse,
                 SessionId = sessionId
             };
-        }
-
-        private async Task<string> GetGroqResponse(string systemPrompt, string userMessage)
-        {
-            var apiKey = _configuration["Groq:ApiKey"];
-            var model = _configuration["Groq:Model"];
-
-            using var client = new HttpClient();
-            client.DefaultRequestHeaders.Authorization =
-                new AuthenticationHeaderValue("Bearer", apiKey);
-
-            var requestBody = new
-            {
-                model = model,
-                messages = new[]
-                {
-            new { role = "system", content = systemPrompt },
-            new { role = "user", content = userMessage }
-        }
-            };
-
-            var response = await client.PostAsJsonAsync(
-                "https://api.groq.com/openai/v1/chat/completions",
-                requestBody);
-
-            response.EnsureSuccessStatusCode();
-
-            var result = await response.Content.ReadFromJsonAsync<OpenAIResponseDto>();
-
-            return result?.Choices?.FirstOrDefault()?.Message?.Content ?? "";
         }
 
         private string BuildSystemPrompt(

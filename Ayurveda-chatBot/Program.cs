@@ -9,6 +9,8 @@ using Microsoft.OpenApi.Models;
 using Swashbuckle.AspNetCore.SwaggerGen;
 using System.Reflection;
 using System.Text;
+using Microsoft.SemanticKernel;
+using Microsoft.SemanticKernel.ChatCompletion;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -43,7 +45,7 @@ builder.Services.AddCors(options =>
 {
     options.AddPolicy("AllowFrontend", policy =>
     {
-        policy.WithOrigins("http://localhost:5173", "http://localhost:5174")
+        policy.WithOrigins("http://localhost:3000", "http://localhost:5173", "http://localhost:5174")
               .AllowAnyHeader()
               .AllowAnyMethod()
               .AllowCredentials()
@@ -97,6 +99,14 @@ builder.Services.AddDbContext<ApplicationDbContext>(options =>
 builder.Services.AddScoped<IAuthService, AuthService>();
 builder.Services.AddScoped<IChatService, ChatService>();
 builder.Services.AddScoped<JwtTokenGenerator>();
+
+// Register Semantic Kernel
+builder.Services.AddKernel();
+builder.Services.AddOpenAIChatCompletion(
+    modelId: builder.Configuration["Groq:Model"] ?? "llama-3.3-70b-versatile",
+    apiKey: builder.Configuration["Groq:ApiKey"] ?? string.Empty,
+    endpoint: new Uri("https://api.groq.com/openai/v1")
+);
 
 var app = builder.Build();
 
